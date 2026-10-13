@@ -16,7 +16,6 @@
     --muted:#5f6368;
     --border:#dadce0;
     --bg:#eef1f6;
-    --danger:#d93025;
   }
 
   *{box-sizing:border-box;}
@@ -111,8 +110,6 @@
     color:#1f2937;
   }
 
-  .req{color:var(--danger);margin-left:2px;}
-
   input[type="text"],
   input[type="email"],
   input[type="number"],
@@ -146,14 +143,6 @@
     box-shadow:0 0 0 3px rgba(26,77,143,.12);
   }
 
-  input.invalid,
-  select.invalid,
-  textarea.invalid{
-    border-color:var(--danger);
-    background:#fff8f7;
-    box-shadow:0 0 0 3px rgba(217,48,37,.10);
-  }
-
   .counter{
     margin-top:6px;
     text-align:right;
@@ -161,7 +150,7 @@
     color:var(--muted);
   }
 
-  .counter.over{color:var(--danger);font-weight:600;}
+  .counter.over{color:#b06000;font-weight:600;}
 
   /* ---------- Action bar ---------- */
   .actions{
@@ -196,16 +185,8 @@
   .btn-ghost{background:#fff;border-color:var(--border);color:#3c4043;}
   .btn-ghost:hover:not(:disabled){background:#f1f3f4;}
 
-  .hint{
-    margin:0 32px 4px;
-    font-size:12.5px;
-    color:var(--muted);
-  }
-
   /* =========================================================
      OFF-SCREEN PDF HOLDER
-     Positioned off-screen at a fixed, known offset so
-     html2canvas captures the element cleanly from (0,0).
      ========================================================= */
   #pdfHolder{
     position:absolute;
@@ -218,23 +199,27 @@
   }
 
   /* =========================================================
-     PDF DOCUMENT — EXACT US-Letter size (816 x 1056 px @ 96dpi)
-     Content is horizontally centred via symmetric padding.
+     PDF DOCUMENT — US Letter width (816 px @ 96 dpi).
+     min-height = one page; grows if justification is long,
+     producing additional pages automatically.
+     Flex layout keeps the note at the bottom of the last page.
      ========================================================= */
   .pdf-doc{
     width:816px;
     min-height:1056px;
-    padding:12px 86px 40px;
+    padding:12px 86px 20px;
     background:#fff;
     color:#111;
     font-family:Arial, Helvetica, sans-serif;
     font-size:16px;
     line-height:1.35;
     box-sizing:border-box;
-    position:relative;
+    display:flex;
+    flex-direction:column;
   }
 
   .pdf-head{
+    flex-shrink:0;
     display:block;
     text-align:center;
     margin:0 0 7px;
@@ -267,6 +252,7 @@
   .pdf-head .pdf-sub{display:none;}
 
   .pdf-form{
+    flex-shrink:0;
     width:100%;
     border-collapse:collapse;
     table-layout:fixed;
@@ -278,7 +264,6 @@
     font-size:16px;
     line-height:1.3;
   }
-  .pdf-form tr{break-inside:avoid;page-break-inside:avoid;}
 
   .pdf-line{
     display:inline-block;
@@ -291,29 +276,28 @@
     overflow-wrap:anywhere;
     vertical-align:bottom;
   }
+
+  /* Tall fill-in box — grows with content instead of clipping */
   .pdf-line--tall{
     display:block;
-    height:52px;
+    min-height:52px;
+    height:auto;
     border:1px solid #111;
-    padding:0;
-    position:relative;
+    padding:4px 6px;
     white-space:pre-wrap;
     overflow-wrap:anywhere;
     font-size:16px;
-    line-height:1.3;
+    line-height:1.35;
+    box-sizing:border-box;
   }
-  .pdf-line--tall:before,
-  .pdf-line--tall:after{
-    content:"";
-    position:absolute;
-    left:0;
-    right:0;
-    border-top:1px solid #111;
+
+  /* Justification box — wide, tall, and can span multiple pages */
+  .pdf-line--tall.justification-box{
+    min-height:190px;
+    height:auto;
+    page-break-inside:auto;
+    break-inside:auto;
   }
-  .pdf-line--tall.justification-box:before,
-  .pdf-line--tall.justification-box:after{display:none;}
-  .pdf-line--tall:before{top:25px}
-  .pdf-line--tall:after{top:51px}
 
   .pdf-sub-label{
     font-weight:400;
@@ -323,28 +307,24 @@
     display:inline;
   }
 
+  /* Note sits at the bottom of the last page */
   .pdf-note{
-    position:absolute;
-    left:86px;
-    right:86px;
-    bottom:44px;
-    margin:0;
-    padding:0;
-    border:0;
+    margin-top:auto;
+    padding-top:22px;
     font-size:16px;
     font-style:normal;
     line-height:1.4;
+    page-break-inside:avoid;
+    break-inside:avoid;
   }
+
   .pdf-footer{
-    position:absolute;
-    right:22px;
-    bottom:8px;
-    display:block;
+    flex-shrink:0;
+    margin-top:10px;
+    text-align:right;
     font-size:11px;
     color:#111;
     font-family:Arial,sans-serif;
-    border:0;
-    padding:0;
   }
   .pdf-footer span:first-child,
   .pdf-footer span:nth-child(2){display:none;}
@@ -354,7 +334,7 @@
   @media print{
     body{background:#fff;padding:0;}
     .page{box-shadow:none;border-radius:0;max-width:none;}
-    .topbar,.actions,.hint{display:none !important;}
+    .topbar,.actions{display:none !important;}
     .form-header{padding:0 0 14px;}
     form{padding:16px 0 0;}
     input,select,textarea{
@@ -396,11 +376,8 @@
   <!-- ================= FORM ================= -->
   <form id="gradeChangeForm" novalidate autocomplete="off"></form>
 
-  <p class="hint">Fields marked with <span class="req">*</span> are required.</p>
-
   <div class="actions">
     <button type="button" class="btn btn-primary" id="downloadBtn">Download as PDF</button>
-    <button type="button" class="btn btn-ghost" id="printBtn">Print</button>
     <button type="button" class="btn btn-ghost" id="resetBtn">Reset Form</button>
   </div>
 </div>
@@ -410,31 +387,31 @@
 
 <script>
 /* =========================================================
-   1. FIELD DEFINITIONS
+   1. FIELD DEFINITIONS  (no field is required)
    ========================================================= */
 const FIELDS = [
-  { id:"studentName",       label:"1. Name of the Student",                                                    type:"text",     placeholder:"Full name of the student", required:true, group:"top" },
-  { id:"studentId",         label:"2. Student's Identification Number",                                        type:"text",     placeholder:"e.g., 2210xxx", required:true, group:"top" },
-  { id:"courseNumber",      label:"3. Course Number",                                                          type:"text",     placeholder:"e.g., CSE 303", required:true, group:"top" },
-  { id:"courseTitle",       label:"4. Course Title",                                                           type:"text",     placeholder:"e.g., Data Structures", required:true, group:"top" },
+  { id:"studentName",       label:"1. Name of the Student",                                                    type:"text",     placeholder:"Full name of the student", group:"top" },
+  { id:"studentId",         label:"2. Student's Identification Number",                                        type:"text",     placeholder:"e.g., 2210xxx", group:"top" },
+  { id:"courseNumber",      label:"3. Course Number",                                                          type:"text",     placeholder:"e.g., CSE 303", group:"top" },
+  { id:"courseTitle",       label:"4. Course Title",                                                           type:"text",     placeholder:"e.g., Data Structures", group:"top" },
   { id:"section",           label:"5. Section (of the Student for the Course)",                                type:"text",     placeholder:"e.g., 01", group:"top" },
   { id:"department",        label:"6. Department (of the Course)",                                             type:"text",     placeholder:"e.g., Department of CSE", group:"top" },
   { id:"school",            label:"7. School (of the Course)",                                                 type:"text",     placeholder:"e.g., School of Engineering & CS", group:"top" },
   { id:"enrolmentSemester", label:"8. Course Enrolment Semester with Year",                                    type:"text",     placeholder:"e.g., Spring 2025", group:"top" },
 
-  { id:"currentGrade",      label:"a. Current Grade and its Numerical Equivalence (as recorded earlier)",     type:"text",     placeholder:"e.g., B+ (3.30)", required:true, group:"9" },
+  { id:"currentGrade",      label:"a. Current Grade and its Numerical Equivalence (as recorded earlier)",     type:"text",     placeholder:"e.g., B+ (3.30)", group:"9" },
   { id:"currentBreakdown",  label:"b. Break-down of the Marks",                                                type:"textarea", placeholder:"e.g., Attendance 08/10, Assignments 18/20, Midterm 24/30, Final 32/40", group:"9" },
   { id:"currentSemester",   label:"c. Semester and Year",                                                      type:"text",     placeholder:"e.g., Spring 2025", group:"9" },
 
-  { id:"proposedGrade",     label:"a. Proposed Grade for Change and its Numerical Equivalence",               type:"text",     placeholder:"e.g., A- (3.70)", required:true, group:"10" },
+  { id:"proposedGrade",     label:"a. Proposed Grade for Change and its Numerical Equivalence",               type:"text",     placeholder:"e.g., A- (3.70)", group:"10" },
   { id:"proposedBreakdown", label:"b. Break-down of the Marks",                                                type:"textarea", placeholder:"e.g., Attendance 10/10, Assignments 19/20, Midterm 26/30, Final 36/40", group:"10" },
   { id:"proposedSemester",  label:"c. Semester and Year",                                                      type:"text",     placeholder:"e.g., Spring 2025", group:"10" },
 
   { id:"justification",     label:"11. Precise Reason and Justification in support of Grade Change (in around 250 words)",
                             type:"textarea", placeholder:"Explain clearly and precisely the reason for the grade change…",
-                            required:true, rows:7, counter:250, group:"11" },
+                            rows:7, counter:250, group:"11" },
 
-  { id:"instructorName",    label:"12. Name of the Course Instructor",                                         type:"text",     placeholder:"Full name", required:true, group:"bottom" },
+  { id:"instructorName",    label:"12. Name of the Course Instructor",                                         type:"text",     placeholder:"Full name", group:"bottom" },
   { id:"designation",       label:"13. Designation of the Instructor",                                         type:"text",     placeholder:"e.g., Assistant Professor", group:"bottom" },
   { id:"instructorStatus",  label:"14. Status of the Instructor (part-time/ full-time)",                       type:"select",   options:["Part-time","Full-time"], group:"bottom" },
   { id:"employeeId",        label:"15. Instructor's Employee Identify Number",                                 type:"text",     placeholder:"e.g., EMP-12345", group:"bottom" },
@@ -454,7 +431,7 @@ FIELDS.forEach(field => {
   label.setAttribute("for", field.id);
 
   const prefix = (field.group === "9" || field.group === "10") ? (field.group + ". ") : "";
-  label.innerHTML = prefix + field.label + (field.required ? ' <span class="req">*</span>' : "");
+  label.textContent = prefix + field.label;
   wrap.appendChild(label);
 
   let input;
@@ -479,11 +456,6 @@ FIELDS.forEach(field => {
   input.id = field.id;
   input.name = field.id;
   if (field.placeholder) input.placeholder = field.placeholder;
-  if (field.required) input.required = true;
-
-  const clearInvalid = () => input.classList.remove("invalid");
-  input.addEventListener("input", clearInvalid);
-  input.addEventListener("change", clearInvalid);
 
   wrap.appendChild(input);
 
@@ -534,20 +506,6 @@ function getValues() {
   return values;
 }
 
-function validate() {
-  let firstInvalid = null;
-  FIELDS.forEach(f => {
-    const el = document.getElementById(f.id);
-    if (!el) return;
-    const value = el.value.trim();
-    let bad = f.required && !value;
-    if (!bad && f.type === "email" && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) bad = true;
-    el.classList.toggle("invalid", bad);
-    if (bad && !firstInvalid) firstInvalid = el;
-  });
-  return firstInvalid;
-}
-
 function logoMarkup() {
   const container = document.getElementById("brandLogo");
   return container ? container.innerHTML : "";
@@ -584,15 +542,15 @@ function buildPdfDocument() {
     table.appendChild(tr);
   };
 
-  const full = (label, id, height) => {
+  const full = (label, id, tall) => {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
     td.colSpan = 1;
     td.className = "value--full";
     td.innerHTML =
       '<div class="pdf-sub-label">' + esc(label) + '</div>' +
-      '<div class="pdf-line' + (height ? '--tall' : '') + '"' +
-        (height ? ' style="margin-left:40px;width:calc(100% - 40px)"' : '') +
+      '<div class="pdf-line' + (tall ? ' pdf-line--tall' : '') + '"' +
+        (tall ? ' style="margin-left:40px;width:calc(100% - 40px)"' : '') +
       '>' + esc(v[id]) + '</div>';
     tr.appendChild(td);
     table.appendChild(tr);
@@ -614,10 +572,9 @@ function buildPdfDocument() {
   lineField("      c. Semester and Year:", "proposedSemester", "calc(100% - 180px)");
   full("11.  Precise Reason and Justification in support of Grade Change (in around 250 words):", "justification", true);
 
-  // Give the justification box the same generous writing area as the Word form.
+  // Justification box — generous writing area, grows if needed
   const justBox = table.lastElementChild.querySelector(".pdf-line--tall");
   justBox.classList.add("justification-box");
-  justBox.style.height = "190px";
   justBox.style.marginLeft = "28px";
   justBox.style.width = "calc(100% - 40px)";
 
@@ -646,21 +603,12 @@ function buildPdfDocument() {
    6. ACTIONS
    ========================================================= */
 const downloadBtn = document.getElementById("downloadBtn");
-const printBtn    = document.getElementById("printBtn");
 const resetBtn    = document.getElementById("resetBtn");
 const holder      = document.getElementById("pdfHolder");
 
 downloadBtn.addEventListener("click", async () => {
-  const firstInvalid = validate();
-  if (firstInvalid) {
-    firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
-    firstInvalid.focus({ preventScroll: true });
-    return;
-  }
-
   if (typeof html2pdf === "undefined") {
-    alert("PDF library could not be loaded (you may be offline). The print dialog will open instead — choose 'Save as PDF'.");
-    window.print();
+    alert("PDF library could not be loaded (you may be offline).");
     return;
   }
 
@@ -675,29 +623,28 @@ downloadBtn.addEventListener("click", async () => {
   /* Let fonts / the embedded logo settle before capture. */
   await new Promise(r => requestAnimationFrame(() => setTimeout(r, 150)));
 
+  /* Measure the actual document height (≥ 1 page). If the
+     justification is long, this is what makes html2pdf emit
+     additional pages automatically. */
+  const docHeight = Math.max(1056, pdfDoc.scrollHeight);
+
   const student = (document.getElementById("studentName").value || "Student")
-                    .replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_");
+                    .replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_") || "Student";
 
   const options = {
     margin: 0,
     filename: "Grade_Change_Form_" + student + ".pdf",
     image: { type: "jpeg", quality: 0.98 },
 
-    /* ---------------------------------------------------
-       Capture exactly 816 × 1056 px (US Letter @96dpi).
-       Locking windowWidth / windowHeight to the same
-       numbers is what keeps the capture perfectly
-       centred on the generated PDF page.
-       --------------------------------------------------- */
     html2canvas: {
       scale: 2,
       useCORS: true,
       allowTaint: true,
       backgroundColor: "#ffffff",
       width: 816,
-      height: 1056,
+      height: docHeight,
       windowWidth: 816,
-      windowHeight: 1056,
+      windowHeight: docHeight,
       scrollX: 0,
       scrollY: 0,
       x: 0,
@@ -705,17 +652,18 @@ downloadBtn.addEventListener("click", async () => {
       logging: false
     },
 
-    /* Letter page = 816 x 1056 px @96dpi → the image
-       fills the whole page with no offset. */
     jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
-    pagebreak: { mode: ["css", "legacy"], avoid: ["tr", ".pdf-line--tall", ".pdf-note"] }
+
+    /* Note stays whole; rows may split if they are taller than a page
+       (this is what lets a very long justification flow to page 2). */
+    pagebreak: { mode: ["css", "legacy"], avoid: [".pdf-note"] }
   };
 
   try {
     await html2pdf().set(options).from(pdfDoc).save();
   } catch (err) {
     console.error(err);
-    alert("Sorry, the PDF could not be generated. Please use the Print button and choose 'Save as PDF'.");
+    alert("Sorry, the PDF could not be generated.");
   } finally {
     holder.innerHTML = "";
     downloadBtn.disabled = false;
@@ -723,12 +671,9 @@ downloadBtn.addEventListener("click", async () => {
   }
 });
 
-printBtn.addEventListener("click", () => window.print());
-
 resetBtn.addEventListener("click", () => {
   if (!confirm("Clear all the information you have entered?")) return;
   form.reset();
-  form.querySelectorAll(".invalid").forEach(el => el.classList.remove("invalid"));
   const counter = document.getElementById("justificationCounter");
   if (counter) {
     counter.textContent = "0 / 250 words";
