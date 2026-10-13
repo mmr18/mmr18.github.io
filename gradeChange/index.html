@@ -199,58 +199,59 @@
   }
 
   /* =========================================================
-     PDF DOCUMENT — US Letter width (816 px @ 96 dpi).
-     min-height = one page; grows if justification is long,
-     producing additional pages automatically.
-     Flex layout keeps the note at the bottom of the last page.
+     PDF DOCUMENT — US Letter (816 x 1056 px @ 96 dpi).
+     Two-column layout on the top (fields 1-8) and the
+     instructor block (12-16) means the whole form fits
+     on a single page even with a generous justification box.
      ========================================================= */
   .pdf-doc{
     width:816px;
     min-height:1056px;
-    padding:12px 86px 20px;
+    padding:12px 60px 20px;      /* symmetric 60 px margins */
     background:#fff;
     color:#111;
     font-family:Arial, Helvetica, sans-serif;
-    font-size:16px;
+    font-size:14px;
     line-height:1.35;
     box-sizing:border-box;
     display:flex;
     flex-direction:column;
   }
 
+  /* ---------- Header ---------- */
   .pdf-head{
     flex-shrink:0;
     display:block;
     text-align:center;
-    margin:0 0 7px;
-    padding:0 0 10px;
+    margin:0 0 6px;
+    padding:0 0 8px;
     border-bottom:1px solid #111;
   }
   .pdf-head .pdf-logo{
-    height:150px;
+    height:120px;
     display:flex;
     justify-content:center;
     align-items:flex-start;
   }
   .pdf-head img{
     display:block;
-    width:260px;
+    width:240px;
     height:auto;
-    max-height:145px;
+    max-height:115px;
     object-fit:contain;
   }
   .pdf-head .logo-placeholder{display:none;}
   .pdf-head .pdf-title{padding:0;text-align:center;}
   .pdf-head h1{
     font-family:Arial,Helvetica,sans-serif;
-    font-size:18px;
+    font-size:17px;
     line-height:1.2;
     font-weight:700;
     margin:0;
-    letter-spacing:0;
   }
   .pdf-head .pdf-sub{display:none;}
 
+  /* ---------- Form table ---------- */
   .pdf-form{
     flex-shrink:0;
     width:100%;
@@ -258,61 +259,75 @@
     table-layout:fixed;
     font-family:Arial,Helvetica,sans-serif;
   }
+
   .pdf-form td{
     vertical-align:top;
-    padding:1px 0;
-    font-size:16px;
-    line-height:1.3;
+    padding:2px 6px;
+    font-size:14px;
+    line-height:1.35;
   }
 
-  .pdf-line{
-    display:inline-block;
-    min-height:18px;
+  /* ---------- Flex row: label + dotted line ---------- */
+  .field-row{
+    display:flex;
+    align-items:baseline;
+    gap:4px;
+  }
+  .field-row .pdf-sub-label{
+    flex-shrink:0;
+    white-space:nowrap;
+  }
+  .field-row .pdf-line{
+    flex:1 1 auto;
+    min-width:30px;
+    display:block;
+    min-height:17px;
     border-bottom:1px dotted #222;
     padding:0 2px;
-    font-size:16px;
+    font-size:14px;
     line-height:1.2;
     white-space:pre-wrap;
     overflow-wrap:anywhere;
     vertical-align:bottom;
   }
 
-  /* Tall fill-in box — grows with content instead of clipping */
+  /* ---------- Full-width tall box ---------- */
   .pdf-line--tall{
     display:block;
-    min-height:52px;
+    min-height:48px;
     height:auto;
     border:1px solid #111;
-    padding:4px 6px;
+    padding:3px 6px;
     white-space:pre-wrap;
     overflow-wrap:anywhere;
-    font-size:16px;
+    font-size:14px;
     line-height:1.35;
     box-sizing:border-box;
   }
 
-  /* Justification box — wide, tall, and can span multiple pages */
+  /* Justification box — generous, but grows only if needed */
   .pdf-line--tall.justification-box{
-    min-height:190px;
-    height:auto;
+    min-height:220px;
     page-break-inside:auto;
     break-inside:auto;
   }
 
   .pdf-sub-label{
     font-weight:400;
-    font-size:16px;
+    font-size:14px;
     margin:0;
     line-height:1.3;
-    display:inline;
+  }
+  .pdf-sub-label.block{
+    display:block;
+    margin-bottom:3px;
   }
 
   /* Note sits at the bottom of the last page */
   .pdf-note{
     margin-top:auto;
-    padding-top:22px;
-    font-size:16px;
-    font-style:normal;
+    padding-top:18px;
+    font-size:13px;
     line-height:1.4;
     page-break-inside:avoid;
     break-inside:avoid;
@@ -320,9 +335,9 @@
 
   .pdf-footer{
     flex-shrink:0;
-    margin-top:10px;
+    margin-top:8px;
     text-align:right;
-    font-size:11px;
+    font-size:10.5px;
     color:#111;
     font-family:Arial,sans-serif;
   }
@@ -419,7 +434,7 @@ const FIELDS = [
 ];
 
 /* =========================================================
-   2. BUILD WEB FORM
+   2. BUILD WEB FORM (single column, easy to fill)
    ========================================================= */
 const form = document.getElementById("gradeChangeForm");
 
@@ -512,7 +527,7 @@ function logoMarkup() {
 }
 
 /* =========================================================
-   5. BUILD PDF DOCUMENT
+   5. BUILD PDF DOCUMENT — two-column layout, one page
    ========================================================= */
 function buildPdfDocument() {
   const v = getValues();
@@ -520,6 +535,7 @@ function buildPdfDocument() {
   doc.className = "pdf-doc";
   const esc = s => String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
+  /* ---------- HEADER ---------- */
   const head = document.createElement("div");
   head.className = "pdf-head";
   head.innerHTML =
@@ -527,70 +543,105 @@ function buildPdfDocument() {
     '<div class="pdf-title"><h1>Application Form for Grade Change</h1></div>';
   doc.appendChild(head);
 
+  /* ---------- TABLE ---------- */
   const table = document.createElement("table");
   table.className = "pdf-form";
 
-  const lineField = (label, id, width) => {
+  /* Paired row: label+line in left half, label+line in right half */
+  const pairRow = (lLabel, lId, rLabel, rId) => {
+    const tr = document.createElement("tr");
+
+    const tdL = document.createElement("td");
+    tdL.colSpan = 2;
+    tdL.innerHTML =
+      '<div class="field-row">' +
+        '<span class="pdf-sub-label">' + esc(lLabel) + '</span>' +
+        '<span class="pdf-line">' + (v[lId] ? esc(v[lId]) : '&nbsp;') + '</span>' +
+      '</div>';
+
+    const tdR = document.createElement("td");
+    tdR.colSpan = 2;
+    tdR.innerHTML =
+      '<div class="field-row">' +
+        '<span class="pdf-sub-label">' + esc(rLabel) + '</span>' +
+        '<span class="pdf-line">' + (v[rId] ? esc(v[rId]) : '&nbsp;') + '</span>' +
+      '</div>';
+
+    tr.appendChild(tdL);
+    tr.appendChild(tdR);
+    table.appendChild(tr);
+  };
+
+  /* Full-width single line */
+  const fullLine = (label, id) => {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    td.style.whiteSpace = "nowrap";
-    const value = v[id] ? esc(v[id]) : "&nbsp;";
+    td.colSpan = 4;
     td.innerHTML =
-      '<span class="pdf-sub-label">' + esc(label) + '</span>' +
-      '<span class="pdf-line" style="width:' + width + ';margin-left:0">' + value + '</span>';
+      '<div class="field-row">' +
+        '<span class="pdf-sub-label">' + esc(label) + '</span>' +
+        '<span class="pdf-line">' + (v[id] ? esc(v[id]) : '&nbsp;') + '</span>' +
+      '</div>';
     tr.appendChild(td);
     table.appendChild(tr);
   };
 
-  const full = (label, id, tall) => {
+  /* Full-width boxed area */
+  const fullBox = (label, id, minHeight, extraClass) => {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    td.colSpan = 1;
-    td.className = "value--full";
+    td.colSpan = 4;
     td.innerHTML =
-      '<div class="pdf-sub-label">' + esc(label) + '</div>' +
-      '<div class="pdf-line' + (tall ? ' pdf-line--tall' : '') + '"' +
-        (tall ? ' style="margin-left:40px;width:calc(100% - 40px)"' : '') +
-      '>' + esc(v[id]) + '</div>';
+      '<div class="pdf-sub-label block">' + esc(label) + '</div>' +
+      '<div class="pdf-line--tall' + (extraClass ? ' ' + extraClass : '') + '"' +
+        (minHeight ? ' style="min-height:' + minHeight + 'px"' : '') + '>' +
+        (v[id] ? esc(v[id]) : '') +
+      '</div>';
     tr.appendChild(td);
     table.appendChild(tr);
   };
 
-  lineField("1.  Name of the Student:", "studentName", "calc(100% - 190px)");
-  lineField("2.  Student’s Identification Number:", "studentId", "calc(100% - 267px)");
-  lineField("3.  Course Number:", "courseNumber", "calc(100% - 145px)");
-  lineField("4.  Course Title:", "courseTitle", "calc(100% - 125px)");
-  lineField("5.  Section (of the Student for the Course):", "section", "calc(100% - 330px)");
-  lineField("6.  Department (of the Course):", "department", "calc(100% - 255px)");
-  lineField("7.  School (of the Course):", "school", "calc(100% - 220px)");
-  lineField("8.  Course Enrolment Semester with Year:", "enrolmentSemester", "calc(100% - 325px)");
-  lineField("9.   a. Current Grade and its Numerical Equivalence (as recorded earlier):", "currentGrade", "calc(100% - 560px)");
-  full("      b. Break-down of the Marks:", "currentBreakdown", true);
-  lineField("      c. Semester and Year:", "currentSemester", "calc(100% - 180px)");
-  lineField("10.  a. Proposed Grade for Change and its Numerical Equivalence:", "proposedGrade", "calc(100% - 515px)");
-  full("      b. Break-down of the Marks:", "proposedBreakdown", true);
-  lineField("      c. Semester and Year:", "proposedSemester", "calc(100% - 180px)");
-  full("11.  Precise Reason and Justification in support of Grade Change (in around 250 words):", "justification", true);
+  /* ---------- Fields 1–8 : two columns ---------- */
+  pairRow("1.  Name of the Student:",                  "studentName",       "2.  Student’s Identification Number:",     "studentId");
+  pairRow("3.  Course Number:",                        "courseNumber",      "4.  Course Title:",                        "courseTitle");
+  pairRow("5.  Section (of the Student for the Course):", "section",         "6.  Department (of the Course):",           "department");
+  pairRow("7.  School (of the Course):",               "school",            "8.  Course Enrolment Semester with Year:", "enrolmentSemester");
 
-  // Justification box — generous writing area, grows if needed
-  const justBox = table.lastElementChild.querySelector(".pdf-line--tall");
-  justBox.classList.add("justification-box");
-  justBox.style.marginLeft = "28px";
-  justBox.style.width = "calc(100% - 40px)";
+  /* ---------- Section 9 ---------- */
+  fullLine("9.   a. Current Grade and its Numerical Equivalence (as recorded earlier):", "currentGrade");
+  fullBox("      b. Break-down of the Marks:", "currentBreakdown", 46);
+  fullLine("      c. Semester and Year:", "currentSemester");
 
-  lineField("12.  Name of the Course Instructor:", "instructorName", "calc(100% - 270px)");
-  lineField("13.  Designation of the Instructor:", "designation", "calc(100% - 250px)");
-  lineField("14.  Status of the Instructor (part-time/ full-time):", "instructorStatus", "calc(100% - 355px)");
-  lineField("15.  Instructor’s Employee Identify Number:", "employeeId", "calc(100% - 325px)");
-  lineField("16.  IUB Official e-mail address (instructor’s):", "email", "calc(100% - 325px)");
+  /* ---------- Section 10 ---------- */
+  fullLine("10.  a. Proposed Grade for Change and its Numerical Equivalence:", "proposedGrade");
+  fullBox("       b. Break-down of the Marks:", "proposedBreakdown", 46);
+  fullLine("       c. Semester and Year:", "proposedSemester");
+
+  /* ---------- Section 11 : Justification ---------- */
+  fullBox(
+    "11.  Precise Reason and Justification in support of Grade Change (in around 250 words):",
+    "justification",
+    220,
+    "justification-box"
+  );
+
+  /* ---------- Fields 12–16 : two columns ---------- */
+  pairRow("12.  Name of the Course Instructor:",        "instructorName",   "13.  Designation of the Instructor:",       "designation");
+
+  /* Field 14 has a long label — give it its own full row */
+  fullLine("14.  Status of the Instructor (part-time/ full-time):", "instructorStatus");
+
+  pairRow("15.  Instructor’s Employee Identify Number:", "employeeId",     "16.  IUB Official e-mail address (instructor’s):", "email");
 
   doc.appendChild(table);
 
+  /* ---------- NB NOTE ---------- */
   const note = document.createElement("div");
   note.className = "pdf-note";
   note.textContent = "NB: The filled-in Application Form in PDF format is to be uploaded for review and approval.";
   doc.appendChild(note);
 
+  /* ---------- FOOTER ---------- */
   const footer = document.createElement("div");
   footer.className = "pdf-footer";
   footer.innerHTML = '<span>Grade Change Form</span><span>Independent University, Bangladesh</span><span>(3)</span>';
@@ -620,12 +671,11 @@ downloadBtn.addEventListener("click", async () => {
   const pdfDoc = buildPdfDocument();
   holder.appendChild(pdfDoc);
 
-  /* Let fonts / the embedded logo settle before capture. */
+  /* Let fonts / logo settle before capture */
   await new Promise(r => requestAnimationFrame(() => setTimeout(r, 150)));
 
-  /* Measure the actual document height (≥ 1 page). If the
-     justification is long, this is what makes html2pdf emit
-     additional pages automatically. */
+  /* If the justification overflows the min-height, the doc grows
+     past 1056 px and html2pdf automatically emits a second page. */
   const docHeight = Math.max(1056, pdfDoc.scrollHeight);
 
   const student = (document.getElementById("studentName").value || "Student")
@@ -653,9 +703,6 @@ downloadBtn.addEventListener("click", async () => {
     },
 
     jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
-
-    /* Note stays whole; rows may split if they are taller than a page
-       (this is what lets a very long justification flow to page 2). */
     pagebreak: { mode: ["css", "legacy"], avoid: [".pdf-note"] }
   };
 
